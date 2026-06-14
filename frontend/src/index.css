@@ -108,16 +108,19 @@ body {
 
   /* 小徽章 */
   .badge-warm {
-    @apply inline-flex items-center gap-1 px-2.5 py-0.5 rounded-none text-xs font-bold border;
+    @apply inline-flex items-center justify-center min-w-[20px] px-1.5 py-px rounded-full text-[10px] font-semibold tabular-nums;
   }
   .badge-ochre {
-    @apply badge-warm bg-amber-50 text-amber-500 border-amber-200;
+    @apply badge-warm bg-amber-100/80 text-amber-600;
+  }
+  .badge-amber {
+    @apply badge-warm bg-amber-100/80 text-amber-600;
   }
   .badge-moss {
-    @apply badge-warm bg-olive-50 text-olive-500 border-olive-200;
+    @apply badge-warm bg-olive-100/80 text-olive-600;
   }
   .badge-ember {
-    @apply badge-warm bg-rust-50 text-rust-400 border-rust-200;
+    @apply badge-warm bg-rust-100/80 text-rust-500;
   }
 }
 

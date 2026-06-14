@@ -195,7 +195,7 @@ function VocabListStep({ vocab, onClose, loading, t, currentFileId, sourceLang, 
             <div className="flex items-center gap-2">
               <BookOpen className="w-4 h-4 text-amber-500" />
               <h2 className="text-sm font-bold font-display text-ink-700">{t.vocabList || '单词表'}</h2>
-              <span className="badge-ochre text-xs px-2 py-0.5 rounded-none bg-amber-100 text-amber-500">
+              <span className="badge-ochre ml-1">
                 {vocab.length}
               </span>
               {searchQuery && filteredVocab.length !== vocab.length && (
