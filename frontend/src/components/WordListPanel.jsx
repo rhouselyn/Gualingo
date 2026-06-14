@@ -454,7 +454,7 @@ function WordListPanel({ sourceLang, t, onBack, pageSize = 50, favoritesMode = f
               {favoritesMode ? (t.favorites || '收藏') : (t.vocabOverview || '词汇总览')}
             </span>
             {!loading && displayWords.length > 0 && (
-              <span className="badge-ochre text-xs text-ink-400 bg-parchment-100 px-2 py-0.5 rounded-none">{displayWords.length} {t.wordCount || '词'}</span>
+              <span className="badge-ochre ml-1">{displayWords.length} {t.wordCount || '词'}</span>
             )}
           </div>
           <button
@@ -506,7 +506,7 @@ function WordListPanel({ sourceLang, t, onBack, pageSize = 50, favoritesMode = f
           <BookOpen className="w-4 h-4 text-amber-500" />
           <span className="text-sm font-bold font-display text-ink-700">{t.vocabOverview || '词汇总览'}</span>
           {!isOpen && words.length > 0 && (
-            <span className="badge-ochre text-xs text-ink-400 bg-parchment-100 px-2 py-0.5 rounded-none">{words.length} {t.wordCount || '词'}</span>
+            <span className="badge-ochre ml-1">{words.length} {t.wordCount || '词'}</span>
           )}
         </div>
         <motion.div

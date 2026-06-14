@@ -958,7 +958,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                       <span className={showOriginal ? 'tab-warm-active' : 'tab-warm-inactive'}>{t.showOriginal}</span>
                     </span>
                   </h3>
-                  <span className="badge-amber">
+                  <span className="badge-amber ml-1">
                     {filteredSentences.length}
                   </span>
                 </div>
@@ -1055,7 +1055,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                       <span className={showGlobalVocab ? 'tab-warm-active' : 'tab-warm-inactive'}>{t.globalVocabList}</span>
                     </span>
                   </h3>
-                  <span className="badge-amber">
+                  <span className="badge-amber ml-1">
                     {showGlobalVocab ? filteredGlobalVocab.length : filteredVocab.length}
                   </span>
                 </div>
