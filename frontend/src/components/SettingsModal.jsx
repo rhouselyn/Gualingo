@@ -648,7 +648,7 @@ function SettingsModal({ isOpen, onClose, uiLang, onUiLangChange, pageSize, onPa
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 10 }}
           transition={{ duration: 0.15 }}
-          className="bg-parchment-50 border-2 border-aged-200 rounded-md shadow-retro-xl w-[580px] max-h-[80vh] overflow-hidden flex flex-col"
+          className="bg-parchment-50 border-2 border-aged-200 rounded-md shadow-retro-xl w-[580px] h-[520px] overflow-hidden flex flex-col"
           onClick={e => e.stopPropagation()}
         >
           {/* Header */}
