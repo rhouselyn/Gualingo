@@ -8,7 +8,7 @@ const baseUrl = '';
 
 export const api = {
   baseUrl: baseUrl,
-  
+
   // 处理文本
   processText: async (text, sourceLang, targetLang, mode = 'direct') => {
     const response = await axios.post(`${baseUrl}/api/process-text`, {
@@ -106,31 +106,31 @@ export const api = {
     const response = await axios.get(`${baseUrl}/api/${fileId}/phases`);
     return response.data;
   },
-  
+
   // 获取指定阶段的单元列表
   getPhaseUnits: async (fileId, phaseNumber) => {
     const response = await axios.get(`${baseUrl}/api/${fileId}/phase/${phaseNumber}/units`);
     return response.data;
   },
-  
+
   // 获取指定单元的当前练习
   getPhaseUnitExercise: async (fileId, phaseNumber, unitId) => {
     const response = await axios.get(`${baseUrl}/api/${fileId}/phase/${phaseNumber}/unit/${unitId}`);
     return response.data;
   },
-  
+
   // 进入下一个练习
   nextPhaseExercise: async (fileId, phaseNumber, unitId) => {
     const response = await axios.post(`${baseUrl}/api/${fileId}/phase/${phaseNumber}/unit/${unitId}/next`);
     return response.data;
   },
-  
+
   // 标记单元为完成
   completePhaseUnit: async (fileId, phaseNumber, unitId) => {
     const response = await axios.post(`${baseUrl}/api/${fileId}/phase/${phaseNumber}/unit/${unitId}/complete`);
     return response.data;
   },
-  
+
   // 设置阶段进度
   setPhaseProgress: async (fileId, phaseNumber, unitId = 0, exerciseIndex = 0) => {
     const response = await axios.post(`${baseUrl}/api/${fileId}/phase/${phaseNumber}/set-progress`, {

@@ -34,6 +34,7 @@ function NativeLangSelector({ value, onChange, recentLangs = [] }) {
       return l.native.toLowerCase().includes(s) || l.en.toLowerCase().includes(s) || l.zh.includes(search)
     })
 
+  // Group by family, show most common first
   const commonLangs = ['zh', 'en', 'ja', 'ko', 'fr', 'de', 'es', 'ru', 'pt', 'it', 'ar', 'hi', 'th', 'vi', 'id']
   const commonFiltered = filtered.filter(l => commonLangs.includes(l.value))
   const otherFiltered = filtered.filter(l => !commonLangs.includes(l.value))
@@ -174,6 +175,7 @@ function SettingsModal({ isOpen, onClose, uiLang, onUiLangChange, pageSize, onPa
         else if (prefs.target_lang) setLocalUiLang(prefs.target_lang)
         if (prefs.page_size) setLocalPageSize(prefs.page_size)
         if (prefs.auto_update !== undefined) setAutoUpdate(prefs.auto_update)
+        if (prefs.ui_theme) { /* ignored */ }
         setLoading(false)
       }).catch(() => {
         setConfigs([{ api_key: '', base_url: '', model: '', has_key: false, masked_key: '' }])
