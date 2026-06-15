@@ -260,5 +260,15 @@ export const api = {
   checkFavorite: async (word, sourceLang) => {
     const response = await axios.get(`${baseUrl}/api/favorites/check`, { word, source_lang: sourceLang });
     return response.data;
+  },
+
+  checkForUpdates: async () => {
+    const response = await axios.get(`${baseUrl}/api/version-check`);
+    return response.data;
+  },
+
+  triggerAutoUpdate: async () => {
+    const response = await axios.post(`${baseUrl}/api/auto-update`);
+    return response.data;
   }
 };

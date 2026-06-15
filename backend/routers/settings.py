@@ -2,7 +2,9 @@
 
 import json
 import asyncio
+import os
 
+import requests
 from fastapi import APIRouter, HTTPException
 from typing import List, Optional
 from pydantic import BaseModel
@@ -36,6 +38,7 @@ class UserPreferencesUpdate(BaseModel):
     recent_languages: Optional[List[str]] = None
     page_size: Optional[int] = None
     only_new_words: Optional[bool] = None
+    auto_update: Optional[bool] = None
 
 
 @router.get("/settings")
@@ -133,6 +136,8 @@ async def update_user_preferences(req: UserPreferencesUpdate):
             current["page_size"] = req.page_size
         if req.only_new_words is not None:
             current["only_new_words"] = req.only_new_words
+        if req.auto_update is not None:
+            current["auto_update"] = req.auto_update
         storage.save_user_preferences(current)
         return current
     except Exception as e:
@@ -242,3 +247,53 @@ async def _do_translate_ui(lang_code: str):
         print(f"UI translation error: {e}")
 
     _ui_translation_tasks[lang_code] = {"status": "error"}
+
+
+@router.get("/version-check")
+async def version_check():
+    # Read current version from desktop/package.json
+    current_version = "1.4.0"
+    package_json_path = os.path.join(os.path.dirname(__file__), "..", "desktop", "package.json")
+    try:
+        with open(package_json_path, "r", encoding="utf-8") as f:
+            pkg = json.load(f)
+            current_version = pkg.get("version", "1.4.0")
+    except Exception:
+        pass
+
+    try:
+        resp = requests.get(
+            "https://api.github.com/repos/rhouselyn/Gualingo/releases/latest",
+            timeout=5,
+        )
+        resp.raise_for_status()
+        data = resp.json()
+        latest_version = data.get("tag_name", "").lstrip("v")
+        download_url = ""
+        assets = data.get("assets", [])
+        if assets:
+            download_url = assets[0].get("browser_download_url", "")
+        release_notes = data.get("body", "")
+        has_update = latest_version != current_version and latest_version != ""
+        return {
+            "current_version": current_version,
+            "latest_version": latest_version,
+            "has_update": has_update,
+            "download_url": download_url,
+            "release_notes": release_notes,
+        }
+    except Exception:
+        return {
+            "current_version": current_version,
+            "latest_version": None,
+            "has_update": False,
+            "error": "Failed to check for updates",
+        }
+
+
+@router.post("/auto-update")
+async def auto_update():
+    return {
+        "status": "not_available",
+        "message": "Auto-update is only available in the desktop application",
+    }
