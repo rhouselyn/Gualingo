@@ -124,6 +124,12 @@ function NativeLangSelector({ value, onChange, recentLangs = [] }) {
 
 const SECTIONS = ['api', 'general', 'nativeLang']
 
+const slideVariants = {
+  enter: (dir) => ({ x: dir > 0 ? 80 : -80, opacity: 0 }),
+  center: { x: 0, opacity: 1 },
+  exit: (dir) => ({ x: dir > 0 ? -80 : 80, opacity: 0 }),
+}
+
 function SettingsModal({ isOpen, onClose, uiLang, onUiLangChange, pageSize, onPageSizeChange, t, recentLangs, onRecentLangsChange }) {
   const [configs, setConfigs] = useState([])
   const [currentIndex, setCurrentIndex] = useState(0)
@@ -360,9 +366,10 @@ function SettingsModal({ isOpen, onClose, uiLang, onUiLangChange, pageSize, onPa
               <motion.div
                 key={currentIndex}
                 custom={direction}
-                initial={{ x: direction > 0 ? 80 : -80, opacity: 0 }}
-                animate={{ x: 0, opacity: 1 }}
-                exit={{ x: direction > 0 ? -80 : 80, opacity: 0 }}
+                variants={slideVariants}
+                initial="enter"
+                animate="center"
+                exit="exit"
                 transition={{ duration: 0.15, ease: 'easeInOut' }}
                 className="p-3 space-y-3"
               >
