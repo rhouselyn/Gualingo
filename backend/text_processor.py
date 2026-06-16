@@ -715,12 +715,48 @@ class TextProcessor:
                 for field in ('phonetic', 'morphology', 'meaning'):
                     if not prev.get(field) and token.get(field):
                         prev[field] = token[field]
-        
+
         deduped_normalized = self._normalize_text_for_compare(''.join(t['text'] for t in deduped))
         if deduped_normalized == sentence_normalized:
             return deduped
-        
+
+        # 精确去重后仍比原文长：存在重叠/子串重复（如 今+日+今日），
+        # 用贪心最长匹配对齐原文位置，消除重叠 token
+        if len(deduped_normalized) > len(sentence_normalized):
+            aligned = self._align_tokens_greedy(deduped, sentence_normalized)
+            if aligned:
+                aligned_normalized = self._normalize_text_for_compare(''.join(t['text'] for t in aligned))
+                if aligned_normalized == sentence_normalized:
+                    return aligned
+
         return tokens
+
+    def _align_tokens_greedy(self, tokens, sentence_normalized):
+        """贪心最长匹配：按原文位置对齐 token，跳过无法对齐的重叠 token。"""
+        result = []
+        pos = 0
+        used = set()
+        while pos < len(sentence_normalized):
+            best = None
+            best_idx = -1
+            best_len = 0
+            for idx, token in enumerate(tokens):
+                if idx in used:
+                    continue
+                token_norm = self._normalize_text_for_compare(token['text'])
+                if not token_norm:
+                    continue
+                if sentence_normalized[pos:pos + len(token_norm)] == token_norm and len(token_norm) > best_len:
+                    best = token
+                    best_idx = idx
+                    best_len = len(token_norm)
+            if best is None:
+                pos += 1
+            else:
+                result.append(best)
+                used.add(best_idx)
+                pos += best_len
+        return result
 
     def tokenize_sentence(self, sentence: str, language: str = "en") -> List[str]:
         if language in NO_SPACE_LANGUAGES:
