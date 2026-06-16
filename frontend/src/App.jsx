@@ -120,6 +120,7 @@ function App() {
   const [preprocessStatus, setPreprocessStatus] = useState(null)
   const [showVocabList, setShowVocabList] = useState(false)
   const [fileTitle, setFileTitle] = useState('')
+  const [detectedLang, setDetectedLang] = useState(null)
   const learningContainerRef = useRef(null)
   const dictStateRef = useRef({ vocabPage: 1, sentencePage: 1, globalVocabPage: 1, vocabScrollPos: 0, sentenceTranslationScrollPos: 0, sentenceOriginalScrollPos: 0, globalVocabScrollPos: 0, vocabDisplayMode: 0, sentenceDisplayMode: 0, showOriginal: false, showGlobalVocab: false, vocabSearch: '', sentenceSearch: '' })
   const wrongItemsRef = useRef([])
@@ -304,6 +305,11 @@ function App() {
           setPreprocessStatus(null)
         }
 
+        // 更新检测到的语言（auto 模式下从轮询结果获取，避免显示默认值 'en'）
+        if (status.source_lang && status.source_lang !== 'auto') {
+          setDetectedLang(status.source_lang)
+        }
+
         // 更新标题（后台任务生成后）
         if (status.title) {
           setFileTitle(status.title)
@@ -438,6 +444,7 @@ function App() {
     setFileId(null)
     setFileTitle('')
     setOriginalText('')
+    setDetectedLang(null)
     // 重置字典状态，避免显示上一个条目的残留
     dictStateRef.current = { vocabPage: 1, sentencePage: 1, globalVocabPage: 1, vocabScrollPos: 0, sentenceTranslationScrollPos: 0, sentenceOriginalScrollPos: 0, globalVocabScrollPos: 0, vocabDisplayMode: 0, sentenceDisplayMode: 0, showOriginal: false, showGlobalVocab: false, vocabSearch: '', sentenceSearch: '' }
 
@@ -482,6 +489,8 @@ function App() {
         if (inputMode === 'direct') {
           setOriginalText(text.trim())
         }
+        // 处理开始后立即刷新历史记录列表，用户能立即看到新条目
+        setHistoryRefresh(v => v + 1)
         api.getUserPreferences().then(prefs => {
           if (prefs.recent_languages) setRecentLanguages(prefs.recent_languages)
         }).catch(() => {})
@@ -1144,6 +1153,7 @@ function App() {
     setProgress(0)
     setProcessingInfo(null)
     setOriginalText('')
+    setDetectedLang(null)
     try {
       setCurrentFileId(fileId)
       setFileId(fileId)
@@ -1348,6 +1358,7 @@ function App() {
               t={t}
               currentFileId={currentFileId}
               sourceLang={sourceLang}
+              detectedLang={detectedLang}
               preprocessStatus={preprocessStatus}
               onBack={() => { dictStateRef.current = { vocabPage: 1, sentencePage: 1, globalVocabPage: 1, vocabScrollPos: 0, sentenceTranslationScrollPos: 0, sentenceOriginalScrollPos: 0, globalVocabScrollPos: 0, vocabDisplayMode: 0, sentenceDisplayMode: 0, showOriginal: false, showGlobalVocab: false, vocabSearch: '', sentenceSearch: '' }; setStep('input') }}
               fileTitle={fileTitle}
