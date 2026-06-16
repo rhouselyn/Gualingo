@@ -1,0 +1,1146 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>呱邻国 Gualingo — AI 驱动的沉浸式外语学习平台</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700;900&family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --frog-green: #8B9A6B;
+      --frog-belly: #D8D4BF;
+      --frog-dark: #524D3C;
+      --amber: #E8A838;
+      --amber-light: #F5D78E;
+      --parchment: #F5F0E8;
+      --parchment-dark: #E8E0D0;
+      --ink: #2C2820;
+      --ink-light: #6B6560;
+      --ink-muted: #9B9590;
+      --olive: #6B8A5E;
+      --rust: #C45C3C;
+      --cream: #FDFBF5;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html {
+      scroll-behavior: smooth;
+      font-size: 16px;
+    }
+
+    body {
+      font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--cream);
+      color: var(--ink);
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── Grain Texture Overlay ── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 9999;
+      opacity: 0.03;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+    }
+
+    /* ── Hero Section ── */
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      padding: 2rem;
+      background:
+        radial-gradient(ellipse at 20% 50%, rgba(139,154,107,0.12) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 30%, rgba(232,168,56,0.08) 0%, transparent 50%),
+        radial-gradient(ellipse at 50% 80%, rgba(216,212,191,0.15) 0%, transparent 50%),
+        var(--cream);
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.4rem 1rem;
+      background: rgba(139,154,107,0.1);
+      border: 1.5px solid rgba(139,154,107,0.25);
+      border-radius: 100px;
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: var(--frog-green);
+      letter-spacing: 0.04em;
+      margin-bottom: 2rem;
+      animation: fadeInDown 0.8s ease-out;
+    }
+
+    .hero-badge::before {
+      content: '';
+      width: 6px; height: 6px;
+      background: var(--olive);
+      border-radius: 50%;
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    .frog-mascot {
+      width: 120px;
+      height: 120px;
+      margin-bottom: 1.5rem;
+      animation: float 4s ease-in-out infinite;
+      filter: drop-shadow(0 8px 24px rgba(82,77,60,0.15));
+    }
+
+    .hero-title {
+      font-family: 'Noto Serif SC', 'Playfair Display', serif;
+      font-weight: 900;
+      font-size: clamp(3rem, 8vw, 5.5rem);
+      line-height: 1.1;
+      text-align: center;
+      color: var(--ink);
+      margin-bottom: 0.5rem;
+      animation: fadeInUp 0.8s ease-out 0.2s both;
+    }
+
+    .hero-subtitle {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(1rem, 2.5vw, 1.4rem);
+      font-weight: 400;
+      color: var(--ink-muted);
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      margin-bottom: 1.5rem;
+      animation: fadeInUp 0.8s ease-out 0.4s both;
+    }
+
+    .hero-tagline {
+      font-size: clamp(1rem, 2vw, 1.25rem);
+      color: var(--ink-light);
+      text-align: center;
+      max-width: 560px;
+      line-height: 1.7;
+      margin-bottom: 2.5rem;
+      animation: fadeInUp 0.8s ease-out 0.6s both;
+    }
+
+    .hero-tagline strong {
+      color: var(--frog-dark);
+      font-weight: 700;
+    }
+
+    .hero-cta {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 1rem 2.5rem;
+      background: var(--amber);
+      color: #fff;
+      font-weight: 700;
+      font-size: 1rem;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      box-shadow: 0 4px 16px rgba(232,168,56,0.3), 0 1px 3px rgba(0,0,0,0.08);
+      transition: all 0.3s ease;
+      animation: fadeInUp 0.8s ease-out 0.8s both;
+      text-decoration: none;
+    }
+
+    .hero-cta:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(232,168,56,0.4), 0 2px 6px rgba(0,0,0,0.1);
+    }
+
+    .hero-cta svg { width: 18px; height: 18px; }
+
+    .scroll-hint {
+      position: absolute;
+      bottom: 2rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+      color: var(--ink-muted);
+      font-size: 0.75rem;
+      letter-spacing: 0.1em;
+      animation: fadeInUp 0.8s ease-out 1.2s both;
+    }
+
+    .scroll-hint-line {
+      width: 1px;
+      height: 40px;
+      background: linear-gradient(to bottom, var(--ink-muted), transparent);
+      animation: scrollPulse 2s ease-in-out infinite;
+    }
+
+    /* ── Section Shared ── */
+    .section {
+      padding: 6rem 2rem;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    .section-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--olive);
+      margin-bottom: 1rem;
+    }
+
+    .section-label::before {
+      content: '';
+      width: 24px;
+      height: 2px;
+      background: var(--olive);
+    }
+
+    .section-title {
+      font-family: 'Noto Serif SC', serif;
+      font-weight: 900;
+      font-size: clamp(1.8rem, 4vw, 2.8rem);
+      line-height: 1.2;
+      margin-bottom: 1rem;
+      color: var(--ink);
+    }
+
+    .section-desc {
+      font-size: 1.05rem;
+      line-height: 1.8;
+      color: var(--ink-light);
+      max-width: 680px;
+    }
+
+    /* ── Problem Section ── */
+    .problem-section {
+      background:
+        linear-gradient(135deg, rgba(139,154,107,0.06) 0%, transparent 50%),
+        var(--cream);
+    }
+
+    .pain-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.5rem;
+      margin-top: 3rem;
+    }
+
+    .pain-card {
+      background: var(--parchment);
+      border: 2px solid var(--parchment-dark);
+      border-radius: 4px;
+      padding: 2rem;
+      position: relative;
+      overflow: hidden;
+      transition: all 0.3s ease;
+    }
+
+    .pain-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 32px rgba(44,40,32,0.08);
+      border-color: var(--amber);
+    }
+
+    .pain-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 4px;
+      height: 100%;
+      background: var(--rust);
+    }
+
+    .pain-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.4rem;
+      margin-bottom: 1rem;
+      background: rgba(196,92,60,0.08);
+    }
+
+    .pain-card h3 {
+      font-family: 'Noto Serif SC', serif;
+      font-weight: 700;
+      font-size: 1.15rem;
+      margin-bottom: 0.75rem;
+      color: var(--ink);
+    }
+
+    .pain-card p {
+      font-size: 0.95rem;
+      line-height: 1.7;
+      color: var(--ink-light);
+    }
+
+    /* ── Solution / Flow Section ── */
+    .flow-section {
+      position: relative;
+    }
+
+    .flow-steps {
+      margin-top: 3rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+
+    .flow-step {
+      display: grid;
+      grid-template-columns: 80px 1fr;
+      gap: 2rem;
+      padding: 2rem 0;
+      position: relative;
+    }
+
+    .flow-step:not(:last-child)::after {
+      content: '';
+      position: absolute;
+      left: 39px;
+      top: 80px;
+      bottom: 0;
+      width: 2px;
+      background: linear-gradient(to bottom, var(--amber), var(--parchment-dark));
+    }
+
+    .flow-number {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: var(--parchment);
+      border: 2.5px solid var(--amber);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Playfair Display', serif;
+      font-weight: 900;
+      font-size: 1.6rem;
+      color: var(--amber);
+      position: relative;
+      z-index: 1;
+    }
+
+    .flow-content h3 {
+      font-family: 'Noto Serif SC', serif;
+      font-weight: 700;
+      font-size: 1.25rem;
+      margin-bottom: 0.5rem;
+      color: var(--ink);
+    }
+
+    .flow-content p {
+      font-size: 0.95rem;
+      line-height: 1.7;
+      color: var(--ink-light);
+    }
+
+    .flow-tag {
+      display: inline-block;
+      padding: 0.2rem 0.6rem;
+      background: rgba(139,154,107,0.1);
+      border: 1px solid rgba(139,154,107,0.2);
+      border-radius: 3px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--olive);
+      margin-top: 0.5rem;
+      margin-right: 0.3rem;
+    }
+
+    /* ── Exercise Types ── */
+    .exercise-section {
+      background:
+        linear-gradient(180deg, rgba(232,168,56,0.04) 0%, transparent 100%),
+        var(--cream);
+    }
+
+    .exercise-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1.5rem;
+      margin-top: 3rem;
+    }
+
+    .exercise-card {
+      background: #fff;
+      border: 2px solid var(--parchment-dark);
+      border-radius: 4px;
+      padding: 2rem;
+      transition: all 0.3s ease;
+      position: relative;
+    }
+
+    .exercise-card:hover {
+      border-color: var(--amber);
+      box-shadow: 0 8px 24px rgba(44,40,32,0.06);
+    }
+
+    .exercise-phase {
+      display: inline-block;
+      padding: 0.2rem 0.7rem;
+      border-radius: 3px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 1rem;
+    }
+
+    .phase-1 {
+      background: rgba(107,138,94,0.1);
+      color: var(--olive);
+      border: 1px solid rgba(107,138,94,0.2);
+    }
+
+    .phase-2 {
+      background: rgba(232,168,56,0.1);
+      color: #B8860B;
+      border: 1px solid rgba(232,168,56,0.2);
+    }
+
+    .exercise-card h3 {
+      font-family: 'Noto Serif SC', serif;
+      font-weight: 700;
+      font-size: 1.15rem;
+      margin-bottom: 0.75rem;
+      color: var(--ink);
+    }
+
+    .exercise-card p {
+      font-size: 0.9rem;
+      line-height: 1.7;
+      color: var(--ink-light);
+    }
+
+    .exercise-demo {
+      margin-top: 1rem;
+      padding: 1rem;
+      background: var(--parchment);
+      border-radius: 3px;
+      font-size: 0.85rem;
+      color: var(--ink-light);
+      border-left: 3px solid var(--amber);
+    }
+
+    .exercise-demo code {
+      background: rgba(232,168,56,0.12);
+      padding: 0.1rem 0.4rem;
+      border-radius: 2px;
+      font-size: 0.82rem;
+      color: #B8860B;
+    }
+
+    /* ── Target Users ── */
+    .users-section {
+      position: relative;
+    }
+
+    .user-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.5rem;
+      margin-top: 3rem;
+    }
+
+    .user-card {
+      background: var(--parchment);
+      border: 2px solid var(--parchment-dark);
+      border-radius: 4px;
+      padding: 2rem;
+      text-align: center;
+      transition: all 0.3s ease;
+    }
+
+    .user-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 24px rgba(44,40,32,0.06);
+    }
+
+    .user-avatar {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      margin: 0 auto 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.8rem;
+      background: rgba(139,154,107,0.1);
+      border: 2px solid rgba(139,154,107,0.15);
+    }
+
+    .user-card h3 {
+      font-family: 'Noto Serif SC', serif;
+      font-weight: 700;
+      font-size: 1.1rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .user-card .user-scene {
+      font-size: 0.85rem;
+      color: var(--olive);
+      font-weight: 500;
+      margin-bottom: 0.75rem;
+    }
+
+    .user-card p {
+      font-size: 0.9rem;
+      line-height: 1.7;
+      color: var(--ink-light);
+    }
+
+    /* ── Value Section ── */
+    .value-section {
+      background:
+        radial-gradient(ellipse at 30% 50%, rgba(232,168,56,0.06) 0%, transparent 60%),
+        var(--cream);
+    }
+
+    .value-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 2rem;
+      margin-top: 3rem;
+    }
+
+    .value-block {
+      padding: 2.5rem;
+      background: #fff;
+      border: 2px solid var(--parchment-dark);
+      border-radius: 4px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .value-block::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+    }
+
+    .value-block.commercial::after { background: var(--amber); }
+    .value-block.efficiency::after { background: var(--olive); }
+    .value-block.social::after { background: var(--frog-dark); }
+
+    .value-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .value-block.commercial .value-icon { background: rgba(232,168,56,0.1); }
+    .value-block.efficiency .value-icon { background: rgba(107,138,94,0.1); }
+    .value-block.social .value-icon { background: rgba(82,77,60,0.08); }
+
+    .value-block h3 {
+      font-family: 'Noto Serif SC', serif;
+      font-weight: 700;
+      font-size: 1.2rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .value-block p {
+      font-size: 0.95rem;
+      line-height: 1.7;
+      color: var(--ink-light);
+    }
+
+    /* ── Tech Section ── */
+    .tech-section {
+      position: relative;
+    }
+
+    .tech-stack {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      margin-top: 2rem;
+    }
+
+    .tech-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.6rem 1.2rem;
+      background: var(--parchment);
+      border: 1.5px solid var(--parchment-dark);
+      border-radius: 4px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: var(--ink);
+      transition: all 0.2s ease;
+    }
+
+    .tech-tag:hover {
+      border-color: var(--amber);
+      background: rgba(232,168,56,0.05);
+    }
+
+    .tech-tag .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+
+    .tech-features {
+      margin-top: 3rem;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .tech-feature {
+      padding: 1.5rem;
+      background: var(--parchment);
+      border: 2px solid var(--parchment-dark);
+      border-radius: 4px;
+    }
+
+    .tech-feature h4 {
+      font-weight: 700;
+      font-size: 0.95rem;
+      margin-bottom: 0.5rem;
+      color: var(--ink);
+    }
+
+    .tech-feature p {
+      font-size: 0.85rem;
+      line-height: 1.6;
+      color: var(--ink-light);
+    }
+
+    /* ── Footer ── */
+    .footer {
+      text-align: center;
+      padding: 4rem 2rem;
+      border-top: 2px solid var(--parchment-dark);
+    }
+
+    .footer-frog {
+      width: 48px;
+      height: 48px;
+      margin-bottom: 1rem;
+      opacity: 0.5;
+    }
+
+    .footer p {
+      font-size: 0.85rem;
+      color: var(--ink-muted);
+      line-height: 1.7;
+    }
+
+    .footer a {
+      color: var(--olive);
+      text-decoration: none;
+      border-bottom: 1px solid rgba(107,138,94,0.3);
+    }
+
+    .footer a:hover {
+      color: var(--amber);
+      border-color: var(--amber);
+    }
+
+    /* ── Animations ── */
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes fadeInDown {
+      from { opacity: 0; transform: translateY(-16px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-12px); }
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    @keyframes scrollPulse {
+      0%, 100% { opacity: 0.3; transform: scaleY(1); }
+      50% { opacity: 1; transform: scaleY(1.2); }
+    }
+
+    /* ── Scroll Reveal ── */
+    .reveal {
+      opacity: 0;
+      transform: translateY(30px);
+      transition: all 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 768px) {
+      .flow-step {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+      }
+
+      .flow-step:not(:last-child)::after {
+        left: 39px;
+        top: 80px;
+      }
+
+      .flow-number {
+        width: 60px;
+        height: 60px;
+        font-size: 1.2rem;
+      }
+
+      .section {
+        padding: 4rem 1.25rem;
+      }
+    }
+
+    /* ── Language Cloud ── */
+    .lang-cloud {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-top: 2rem;
+      justify-content: center;
+    }
+
+    .lang-chip {
+      padding: 0.35rem 0.75rem;
+      border-radius: 3px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #fff;
+      letter-spacing: 0.02em;
+      transition: transform 0.2s ease;
+    }
+
+    .lang-chip:hover {
+      transform: scale(1.08);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ═══════════════ HERO ═══════════════ -->
+  <section class="hero">
+    <div class="hero-badge">学习工作赛道</div>
+
+    <!-- Frog SVG Mascot -->
+    <svg class="frog-mascot" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <ellipse cx="50" cy="58" rx="38" ry="32" fill="#B5AE8E"/>
+      <ellipse cx="50" cy="55" rx="34" ry="28" fill="#D8D4BF"/>
+      <circle cx="34" cy="38" r="16" fill="#B5AE8E"/>
+      <circle cx="66" cy="38" r="16" fill="#B5AE8E"/>
+      <circle cx="34" cy="38" r="13" fill="#fff"/>
+      <circle cx="66" cy="38" r="13" fill="#fff"/>
+      <circle cx="36" cy="37" r="6" fill="#524D3C"/>
+      <circle cx="68" cy="37" r="6" fill="#524D3C"/>
+      <circle cx="38" cy="35" r="2" fill="#fff"/>
+      <circle cx="70" cy="35" r="2" fill="#fff"/>
+      <ellipse cx="50" cy="62" rx="18" ry="8" fill="#E8C985"/>
+      <path d="M38 60 Q50 70 62 60" stroke="#524D3C" stroke-width="2" fill="none" stroke-linecap="round"/>
+    </svg>
+
+    <h1 class="hero-title">呱邻国</h1>
+    <div class="hero-subtitle">Gualingo</div>
+    <p class="hero-tagline">
+      完全由 <strong>AI 驱动</strong>的沉浸式外语学习平台。<br>
+      输入任意文本，AI 自动生成词汇表、分句翻译和多种练习题，<br>
+      把每一段文字都变成你的<strong>专属学习材料</strong>。
+    </p>
+    <a href="#problem" class="hero-cta">
+      了解更多
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M19 12l-7 7-7-7"/></svg>
+    </a>
+
+    <div class="scroll-hint">
+      <span>SCROLL</span>
+      <div class="scroll-hint-line"></div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ PROBLEM ═══════════════ -->
+  <section class="problem-section" id="problem">
+    <div class="section">
+      <div class="reveal">
+        <div class="section-label">痛点洞察</div>
+        <h2 class="section-title">学外语的素材，永远不够"自己"</h2>
+        <p class="section-desc">
+          传统语言学习 App 提供的是固定课程，但每个人的兴趣、职业、阅读习惯完全不同。你读的新闻、追的剧、工作文档里的专业术语——这些最贴近你生活的内容，恰恰无法被标准化课程覆盖。
+        </p>
+      </div>
+
+      <div class="pain-grid">
+        <div class="pain-card reveal">
+          <div class="pain-icon">📖</div>
+          <h3>课程内容千篇一律</h3>
+          <p>市面上的 App 用统一教材教所有人，你被迫学习与自己无关的对话场景，学了忘、忘了学，效率极低。</p>
+        </div>
+        <div class="pain-card reveal">
+          <div class="pain-icon">🔍</div>
+          <h3>生词脱离上下文</h3>
+          <p>单独背单词没有语境，记住的只是翻译对照，无法在真实阅读和交流中灵活运用，"认识但不会用"是常态。</p>
+        </div>
+        <div class="pain-card reveal">
+          <div class="pain-icon">🌍</div>
+          <h3>小语种资源匮乏</h3>
+          <p>想学泰语、越南语、阿拉伯语方言？主流 App 要么不支持，要么内容极少。100+ 种语言的学习需求被长期忽视。</p>
+        </div>
+        <div class="pain-card reveal">
+          <div class="pain-icon">📝</div>
+          <h3>练习形式单一</h3>
+          <p>填空、选择反复循环，缺乏沉浸式的句子理解和输出训练，学完依然"看不懂长句、写不出文章"。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ SOLUTION FLOW ═══════════════ -->
+  <section class="flow-section" id="solution">
+    <div class="section">
+      <div class="reveal">
+        <div class="section-label">解决方案</div>
+        <h2 class="section-title">你的文本，就是你的课本</h2>
+        <p class="section-desc">
+          呱邻国的核心理念：让 AI 理解你提供的任意文本，自动拆解为可学习的单元，生成完整的词汇表和多样化的练习——从输入到掌握，一站式完成。
+        </p>
+      </div>
+
+      <div class="flow-steps">
+        <div class="flow-step reveal">
+          <div class="flow-number">1</div>
+          <div class="flow-content">
+            <h3>输入文本</h3>
+            <p>三种输入模式：直接粘贴原文、输入母语让 AI 翻译成目标语言、或让 AI 根据主题自动生成学习文本。支持 100+ 种语言的自动检测。</p>
+            <span class="flow-tag">直接输入</span>
+            <span class="flow-tag">AI 翻译</span>
+            <span class="flow-tag">AI 生成</span>
+          </div>
+        </div>
+
+        <div class="flow-step reveal">
+          <div class="flow-number">2</div>
+          <div class="flow-content">
+            <h3>AI 分句翻译 + 生成词汇表</h3>
+            <p>LLM 自动完成句子拆分、逐句翻译、单词划分、词性标注、音标生成和上下文释义。全程零手工规则，纯 AI 理解上下文——你只需提供文本，剩下的交给 AI。</p>
+            <span class="flow-tag">分句翻译</span>
+            <span class="flow-tag">词性标注</span>
+            <span class="flow-tag">音标生成</span>
+            <span class="flow-tag">上下文释义</span>
+          </div>
+        </div>
+
+        <div class="flow-step reveal">
+          <div class="flow-number">3</div>
+          <div class="flow-content">
+            <h3>阶段一：学单词</h3>
+            <p>单词选择题、句子翻译排序、听力理解三种题型交替出现。每个单词配有丰富释义、词形变化、例句和记忆辅助，答对后展开完整单词卡深度学习。</p>
+            <span class="flow-tag">单词选择</span>
+            <span class="flow-tag">句子翻译</span>
+            <span class="flow-tag">听力理解</span>
+          </div>
+        </div>
+
+        <div class="flow-step reveal">
+          <div class="flow-number">4</div>
+          <div class="flow-content">
+            <h3>阶段二：练句子</h3>
+            <p>遮蔽填空（完形填空）和翻译重组（将打乱的翻译片段拖回正确顺序）两种高阶练习，训练对完整句子的理解和输出能力。</p>
+            <span class="flow-tag">遮蔽填空</span>
+            <span class="flow-tag">翻译重组</span>
+          </div>
+        </div>
+
+        <div class="flow-step reveal">
+          <div class="flow-number">5</div>
+          <div class="flow-content">
+            <h3>错题回顾 + 星级评价</h3>
+            <p>答错的题自动收集，单元结束后可选择错题回顾，强化练习直到掌握。每个单元根据错误数量给出 0-3 星评价，激励持续进步。</p>
+            <span class="flow-tag">错题回顾</span>
+            <span class="flow-tag">星级评价</span>
+            <span class="flow-tag">进度追踪</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ EXERCISE TYPES ═══════════════ -->
+  <section class="exercise-section" id="exercises">
+    <div class="section">
+      <div class="reveal">
+        <div class="section-label">练习体系</div>
+        <h2 class="section-title">五大题型，从认到用</h2>
+        <p class="section-desc">
+          从单词辨认到句子输出，阶梯式设计确保每一步都有挑战，每一步都有收获。
+        </p>
+      </div>
+
+      <div class="exercise-grid">
+        <div class="exercise-card reveal">
+          <span class="exercise-phase phase-1">阶段一</span>
+          <h3>单词选择题</h3>
+          <p>看到目标语言单词，从四个母语释义中选出正确答案。答对后展开完整单词卡：丰富释义、词形变化、例句、记忆辅助。</p>
+          <div class="exercise-demo">
+            <code>abandon</code> → 废弃 / 采纳 / 伴随 / 仰慕 ✓
+          </div>
+        </div>
+
+        <div class="exercise-card reveal">
+          <span class="exercise-phase phase-1">阶段一</span>
+          <h3>句子翻译排序</h3>
+          <p>将打乱的母语翻译片段拖拽排列成正确顺序，训练对句子结构和语义的理解。</p>
+          <div class="exercise-demo">
+            <code>他 / 放弃了 / 这个 / 计划</code> → 拖拽排序
+          </div>
+        </div>
+
+        <div class="exercise-card reveal">
+          <span class="exercise-phase phase-1">阶段一</span>
+          <h3>听力理解</h3>
+          <p>听 AI 朗读句子，从四个翻译选项中选出正确含义。语音合成支持多种语言，可随时点击重听。</p>
+          <div class="exercise-demo">
+            🔊 <code>He abandoned the plan.</code> → 选出正确翻译
+          </div>
+        </div>
+
+        <div class="exercise-card reveal">
+          <span class="exercise-phase phase-2">阶段二</span>
+          <h3>遮蔽填空</h3>
+          <p>原文中随机遮蔽若干单词，从候选词池中选出正确单词填入空位。同一句子多次出现，每次遮蔽不同位置，确保全面掌握。</p>
+          <div class="exercise-demo">
+            He <code>___</code> the plan. → 候选：abandon / adopted / ...
+          </div>
+        </div>
+
+        <div class="exercise-card reveal">
+          <span class="exercise-phase phase-2">阶段二</span>
+          <h3>翻译重组</h3>
+          <p>看到原文句子，将打乱的母语翻译片段重新排列成正确顺序。比阶段一的翻译排序更难——需要自己理解原文并组织翻译。</p>
+          <div class="exercise-demo">
+            原文：<code>He abandoned the plan.</code> → 重组翻译片段
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ TARGET USERS ═══════════════ -->
+  <section class="users-section" id="users">
+    <div class="section">
+      <div class="reveal">
+        <div class="section-label">目标用户</div>
+        <h2 class="section-title">谁需要呱邻国？</h2>
+        <p class="section-desc">
+          任何想要用自己感兴趣的内容学外语的人——从考试备考到兴趣阅读，从职场提升到旅行准备。
+        </p>
+      </div>
+
+      <div class="user-cards">
+        <div class="user-card reveal">
+          <div class="user-avatar">🎓</div>
+          <h3>语言学习者</h3>
+          <div class="user-scene">备考 / 日常提升</div>
+          <p>厌倦了固定教材？粘贴你喜欢的文章、新闻、播客文本，立刻生成专属练习，让学习不再枯燥。</p>
+        </div>
+        <div class="user-card reveal">
+          <div class="user-avatar">💼</div>
+          <h3>职场人士</h3>
+          <div class="user-scene">外企沟通 / 专业阅读</div>
+          <p>把工作邮件、行业报告变成学习材料，学到的就是用得上的，专业术语不再陌生。</p>
+        </div>
+        <div class="user-card reveal">
+          <div class="user-avatar">🌏</div>
+          <h3>小语种爱好者</h3>
+          <div class="user-scene">旅行 / 文化探索</div>
+          <p>100+ 种语言支持，泰语、越南语、阿拉伯语方言……主流 App 忽略的语言，这里都能学。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ VALUE ═══════════════ -->
+  <section class="value-section" id="value">
+    <div class="section">
+      <div class="reveal">
+        <div class="section-label">价值与意义</div>
+        <h2 class="section-title">为什么呱邻国值得做？</h2>
+      </div>
+
+      <div class="value-grid">
+        <div class="value-block commercial reveal">
+          <div class="value-icon">💰</div>
+          <h3>商业价值</h3>
+          <p>语言学习市场规模超百亿美元，但现有产品同质化严重。呱邻国以"个性化内容 + AI 自动生成"切入，用户只需一个 API Key 即可使用，极低的获客和运营成本。未来可拓展订阅制、API 服务、企业定制等多元变现模式。</p>
+        </div>
+        <div class="value-block efficiency reveal">
+          <div class="value-icon">⚡</div>
+          <h3>效率提升</h3>
+          <p>传统方式：查词 → 复制到 Anki → 手动做卡片 → 忘记复习。呱邻国：粘贴文本 → AI 一键生成全部内容 → 立刻开始练习。从"看到生词"到"开始学习"的时间从数小时缩短到数秒。</p>
+        </div>
+        <div class="value-block social reveal">
+          <div class="value-icon">🌱</div>
+          <h3>社会价值</h3>
+          <p>降低语言学习门槛，让资源匮乏的小语种学习者也能获得高质量学习材料。开源模式（AGPL v3）确保社区可以自由使用和改进，推动教育公平。任何人在任何地方，只要有网络和 API，就能学习任何语言。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ TECH ═══════════════ -->
+  <section class="tech-section" id="tech">
+    <div class="section">
+      <div class="reveal">
+        <div class="section-label">技术架构</div>
+        <h2 class="section-title">纯 LLM 驱动，零手工规则</h2>
+        <p class="section-desc">
+          从句子解析、单词划分到释义生成，全程由 LLM 完成。精心设计的 prompt 与结构化输出格式，确保 AI 返回的数据干净、可解析、可直接使用。
+        </p>
+      </div>
+
+      <div class="tech-stack reveal">
+        <span class="tech-tag"><span class="dot" style="background:#61dafb"></span>React 18</span>
+        <span class="tech-tag"><span class="dot" style="background:#646cff"></span>Vite</span>
+        <span class="tech-tag"><span class="dot" style="background:#38bdf8"></span>TailwindCSS</span>
+        <span class="tech-tag"><span class="dot" style="background:#ff6b6b"></span>Framer Motion</span>
+        <span class="tech-tag"><span class="dot" style="background:#009688"></span>FastAPI</span>
+        <span class="tech-tag"><span class="dot" style="background:#3776ab"></span>Python 3.10+</span>
+        <span class="tech-tag"><span class="dot" style="background:#47a248"></span>SQLite</span>
+        <span class="tech-tag"><span class="dot" style="background:#47848f"></span>Electron</span>
+        <span class="tech-tag"><span class="dot" style="background:#74aa9c"></span>OpenAI API</span>
+        <span class="tech-tag"><span class="dot" style="background:#f59e0b"></span>Web Speech API</span>
+      </div>
+
+      <div class="tech-features reveal">
+        <div class="tech-feature">
+          <h4>多 API Key 轮询</h4>
+          <p>支持配置多组 API Key，限速时自动切换，确保学习不中断。内置智能重试和错误恢复机制。</p>
+        </div>
+        <div class="tech-feature">
+          <h4>极致节省 Token</h4>
+          <p>精简 prompt、压缩输出格式、避免冗余字段，将 token 消耗降至最低，降低 API 成本。</p>
+        </div>
+        <div class="tech-feature">
+          <h4>跨平台桌面应用</h4>
+          <p>Electron + PyInstaller 打包，支持 Windows / macOS / Linux，也可 Docker 部署或从源码运行。</p>
+        </div>
+        <div class="tech-feature">
+          <h4>100+ 语言支持</h4>
+          <p>覆盖印欧语系、汉藏语系、亚非语系、南岛语系、达罗毗荼语系、突厥语系等主要语族。</p>
+        </div>
+        <div class="tech-feature">
+          <h4>界面多语言</h4>
+          <p>内置中英日韩等语言包，其他语言由 LLM 实时翻译 UI 文本，实现真正的国际化。</p>
+        </div>
+        <div class="tech-feature">
+          <h4>语音朗读</h4>
+          <p>Web Speech API 驱动的 TTS 朗读，单词和例句随时可听，支持听力理解练习。</p>
+        </div>
+      </div>
+
+      <!-- Language Cloud -->
+      <div class="reveal" style="margin-top: 3rem; text-align: center;">
+        <p style="font-size: 0.85rem; color: var(--ink-muted); margin-bottom: 1rem;">支持的语言（部分展示）</p>
+        <div class="lang-cloud">
+          <span class="lang-chip" style="background:#dc2626">中文</span>
+          <span class="lang-chip" style="background:#3b82f6">English</span>
+          <span class="lang-chip" style="background:#dc2626">日本語</span>
+          <span class="lang-chip" style="background:#1d4ed8">한국어</span>
+          <span class="lang-chip" style="background:#ef4444">Español</span>
+          <span class="lang-chip" style="background:#6366f1">Français</span>
+          <span class="lang-chip" style="background:#eab308">Deutsch</span>
+          <span class="lang-chip" style="background:#16a34a">Italiano</span>
+          <span class="lang-chip" style="background:#22c55e">Português</span>
+          <span class="lang-chip" style="background:#1d4ed8">Русский</span>
+          <span class="lang-chip" style="background:#7c3aed">ไทย</span>
+          <span class="lang-chip" style="background:#dc2626">Tiếng Việt</span>
+          <span class="lang-chip" style="background:#16a34a">العربية</span>
+          <span class="lang-chip" style="background:#2563eb">עברית</span>
+          <span class="lang-chip" style="background:#f97316">हिन्दी</span>
+          <span class="lang-chip" style="background:#dc2626">Türkçe</span>
+          <span class="lang-chip" style="background:#1d4ed8">Suomi</span>
+          <span class="lang-chip" style="background:#16a34a">Magyar</span>
+          <span class="lang-chip" style="background:#f97316">বাংলা</span>
+          <span class="lang-chip" style="background:#f97316">தமிழ்</span>
+          <span class="lang-chip" style="background:#ef4444">Indonesia</span>
+          <span class="lang-chip" style="background:#16a34a">Kiswahili</span>
+          <span class="lang-chip" style="background:#dc2626">Yue</span>
+          <span class="lang-chip" style="background:#eab308">Myanmar</span>
+          <span class="lang-chip" style="background:#2563eb">ქართული</span>
+          <span class="lang-chip" style="background:#0ea5e9">Euskara</span>
+          <span class="lang-chip" style="background:#78716c">100+ ...</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ FOOTER ═══════════════ -->
+  <footer class="footer">
+    <svg class="footer-frog" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <ellipse cx="50" cy="58" rx="38" ry="32" fill="#B5AE8E"/>
+      <ellipse cx="50" cy="55" rx="34" ry="28" fill="#D8D4BF"/>
+      <circle cx="34" cy="38" r="16" fill="#B5AE8E"/>
+      <circle cx="66" cy="38" r="16" fill="#B5AE8E"/>
+      <circle cx="34" cy="38" r="13" fill="#fff"/>
+      <circle cx="66" cy="38" r="13" fill="#fff"/>
+      <circle cx="36" cy="37" r="6" fill="#524D3C"/>
+      <circle cx="68" cy="37" r="6" fill="#524D3C"/>
+      <circle cx="38" cy="35" r="2" fill="#fff"/>
+      <circle cx="70" cy="35" r="2" fill="#fff"/>
+      <ellipse cx="50" cy="62" rx="18" ry="8" fill="#E8C985"/>
+      <path d="M38 60 Q50 70 62 60" stroke="#524D3C" stroke-width="2" fill="none" stroke-linecap="round"/>
+    </svg>
+    <p>
+      <strong>呱邻国 Gualingo</strong> — AI 驱动的沉浸式外语学习平台<br>
+      开源协议：AGPL v3 · <a href="https://github.com/rhouselyn/Gualingo" target="_blank">GitHub</a><br>
+      用 TRAE 构建 · 2025
+    </p>
+  </footer>
+
+  <script>
+    // Scroll reveal
+    const reveals = document.querySelectorAll('.reveal');
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry, i) => {
+        if (entry.isIntersecting) {
+          setTimeout(() => {
+            entry.target.classList.add('visible');
+          }, i * 80);
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+
+    reveals.forEach(el => observer.observe(el));
+  </script>
+</body>
+</html>
