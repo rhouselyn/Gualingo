@@ -1,4 +1,5 @@
 // Edge TTS 语音合成 - 通过后端 API 调用
+// Web Speech API - 浏览器本地合成，实时但音质取决于设备和浏览器
 
 const SPEECH_LANG_MAP = {
   'en': 'en-US',
@@ -125,8 +126,51 @@ const SPEECH_LANG_MAP = {
 // 当前播放的 Audio 对象
 let currentAudio = null
 
+// TTS 引擎：'edge'（默认，效果好但慢）或 'webspeech'（实时，音质取决于设备和浏览器）
+let ttsEngine = 'edge'
+
+function setTtsEngine(engine) {
+  if (engine === 'webspeech' || engine === 'edge') {
+    ttsEngine = engine
+  }
+}
+
+function getTtsEngine() {
+  return ttsEngine
+}
+
 function warmupSpeech() {
-  // Edge TTS 不需要 warmup，保留空函数以兼容
+  // Edge TTS 不需要 warmup；Web Speech API 提前触发一次空合成以唤醒引擎
+  if (ttsEngine === 'webspeech' && typeof window !== 'undefined' && 'speechSynthesis' in window) {
+    try {
+      const u = new SpeechSynthesisUtterance('')
+      u.volume = 0
+      window.speechSynthesis.speak(u)
+    } catch (_) {}
+  }
+}
+
+// Web Speech API 本地合成
+function speakWithWebSpeech(text, lang, slow) {
+  return new Promise((resolve) => {
+    if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
+      console.warn('Web Speech API not available')
+      resolve()
+      return
+    }
+    try {
+      window.speechSynthesis.cancel()
+      const utter = new SpeechSynthesisUtterance(text)
+      utter.lang = lang
+      utter.rate = slow ? 0.6 : 1
+      utter.onend = () => resolve()
+      utter.onerror = () => resolve()
+      window.speechSynthesis.speak(utter)
+    } catch (e) {
+      console.warn('Web Speech API error:', e)
+      resolve()
+    }
+  })
 }
 
 async function speakText(text, sourceLang = 'en', slow = false) {
@@ -137,9 +181,20 @@ async function speakText(text, sourceLang = 'en', slow = false) {
     currentAudio.pause()
     currentAudio = null
   }
+  if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+    try { window.speechSynthesis.cancel() } catch (_) {}
+  }
 
+  const lang = SPEECH_LANG_MAP[sourceLang] || sourceLang
+
+  // Web Speech API 模式：本地合成，实时
+  if (ttsEngine === 'webspeech') {
+    await speakWithWebSpeech(text, lang, slow)
+    return
+  }
+
+  // Edge TTS 模式：通过后端 API 流式获取音频
   try {
-    const lang = SPEECH_LANG_MAP[sourceLang] || sourceLang
     const url = `/api/tts/speak?text=${encodeURIComponent(text)}&lang=${encodeURIComponent(lang)}&slow=${slow}`
 
     // 使用 fetch 流式获取音频，边下载边播放
@@ -167,7 +222,6 @@ async function speakText(text, sourceLang = 'en', slow = false) {
     })
 
     const sourceBuffer = mediaSource.addSourceBuffer('audio/mpeg')
-    let firstChunk = true
 
     sourceBuffer.addEventListener('updateend', async () => {
       try {
@@ -190,7 +244,6 @@ async function speakText(text, sourceLang = 'en', slow = false) {
       return
     }
     sourceBuffer.appendBuffer(value)
-    firstChunk = false
 
     await audio.play()
   } catch (e) {
@@ -199,4 +252,4 @@ async function speakText(text, sourceLang = 'en', slow = false) {
   }
 }
 
-export { SPEECH_LANG_MAP as LANG_MAP, speakText, warmupSpeech }
+export { SPEECH_LANG_MAP as LANG_MAP, speakText, warmupSpeech, setTtsEngine, getTtsEngine }

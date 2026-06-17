@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Settings, X, Key, Globe, Cpu, Check, Loader2, Gauge, Languages, ChevronLeft, ChevronRight, ChevronDown, Plus, Minus, BookOpen, RefreshCw, Download, ToggleLeft, ToggleRight, AlertCircle } from 'lucide-react'
+import { Settings, X, Key, Globe, Cpu, Check, Loader2, Gauge, Languages, ChevronLeft, ChevronRight, ChevronDown, Plus, Minus, BookOpen, RefreshCw, Download, ToggleLeft, ToggleRight, AlertCircle, Volume2 } from 'lucide-react'
 import { api } from '../utils/api'
 import { LangIcon, LANGUAGES } from './InputStep'
+import { setTtsEngine as setGlobalTtsEngine } from '../utils/speech'
 
 function NativeLangSelector({ value, onChange, recentLangs = [] }) {
   const [open, setOpen] = useState(false)
@@ -148,6 +149,9 @@ function SettingsModal({ isOpen, onClose, uiLang, onUiLangChange, pageSize, onPa
   const [versionInfo, setVersionInfo] = useState(null)
   const [autoUpdate, setAutoUpdate] = useState(false)
 
+  // TTS 引擎：'edge'（默认，效果好但慢）或 'webspeech'（实时，音质取决于设备和浏览器）
+  const [ttsEngine, setTtsEngine] = useState('edge')
+
   useEffect(() => {
     if (isOpen) {
       setLoading(true)
@@ -174,6 +178,7 @@ function SettingsModal({ isOpen, onClose, uiLang, onUiLangChange, pageSize, onPa
         else if (prefs.target_lang) setLocalUiLang(prefs.target_lang)
         if (prefs.page_size) setLocalPageSize(prefs.page_size)
         if (prefs.auto_update !== undefined) setAutoUpdate(prefs.auto_update)
+        if (prefs.tts_engine) setTtsEngine(prefs.tts_engine)
         setLoading(false)
       }).catch(() => {
         setConfigs([{ api_key: '', base_url: '', model: '', has_key: false, masked_key: '' }])
@@ -285,7 +290,11 @@ function SettingsModal({ isOpen, onClose, uiLang, onUiLangChange, pageSize, onPa
         page_size: localPageSize,
         recent_languages: updatedRecentLangs,
         auto_update: autoUpdate,
+        tts_engine: ttsEngine,
       })
+
+      // 立即应用到全局 speech 模块
+      setGlobalTtsEngine(ttsEngine)
 
       if (onRecentLangsChange) {
         onRecentLangsChange(updatedRecentLangs)
@@ -523,6 +532,42 @@ function SettingsModal({ isOpen, onClose, uiLang, onUiLangChange, pageSize, onPa
               <span className="text-[10px] text-aged-300">10</span>
               <span className="text-[10px] text-aged-300">200</span>
             </div>
+          </div>
+        </div>
+      </div>
+
+      {/* TTS Engine */}
+      <div>
+        <label className="label-warm flex items-center gap-1.5 text-[10px] font-bold text-ink-400 uppercase tracking-widest mb-1.5">
+          <Volume2 className="w-3 h-3" />
+          {t.ttsEngine || '发音引擎'}
+        </label>
+        <div className="space-y-2">
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              onClick={() => setTtsEngine('edge')}
+              className={`px-3 py-2 text-xs rounded-sm border-2 transition-all text-left ${
+                ttsEngine === 'edge'
+                  ? 'border-amber-400 bg-amber-50 text-amber-700'
+                  : 'border-aged-200 bg-parchment-50 text-ink-600 hover:bg-parchment-100'
+              }`}
+            >
+              <div className="font-bold">Edge TTS</div>
+              <div className="text-[10px] opacity-70 mt-0.5">{t.ttsEdgeDesc || '效果好，但较慢'}</div>
+            </button>
+            <button
+              type="button"
+              onClick={() => setTtsEngine('webspeech')}
+              className={`px-3 py-2 text-xs rounded-sm border-2 transition-all text-left ${
+                ttsEngine === 'webspeech'
+                  ? 'border-amber-400 bg-amber-50 text-amber-700'
+                  : 'border-aged-200 bg-parchment-50 text-ink-600 hover:bg-parchment-100'
+              }`}
+            >
+              <div className="font-bold">Web Speech API</div>
+              <div className="text-[10px] opacity-70 mt-0.5">{t.ttsWebspeechDesc || '实时，音质取决于设备和浏览器'}</div>
+            </button>
           </div>
         </div>
       </div>
