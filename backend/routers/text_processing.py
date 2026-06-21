@@ -26,13 +26,14 @@ async def _preprocess_and_run(file_id: str, text: str, source_lang: str, target_
         if mode == "translate":
             _preserve_tr = {k: processing_status[file_id][k] for k in ("original_text", "title") if k in processing_status.get(file_id, {})}
             processing_status[file_id] = {"status": "processing", "progress": 0, "current_sentence": 0, "total_sentences": 0, "preprocess": "translating", **_preserve_tr}
+            # 翻译方向：target→source（母语→学习语言），把母语翻译为正在学习的语言
             source_lang_name = get_lang_name(source_lang)
             target_lang_name = get_lang_name(target_lang)
             llm_api.reload()
             messages = [
                 {
                     "role": "system",
-                    "content": f"You are a professional translator. Translate the following text from {source_lang_name} to {target_lang_name}. Output ONLY the translated text, nothing else. Do not add any explanations, notes, or commentary. The translation should be natural and fluent. CRITICAL: Output must be plain text only. Do NOT use any markdown formatting (no bold, italic, headers, lists, code blocks, etc.), no emojis, no special symbols. Output pure plain text only."
+                    "content": f"You are a professional translator. Translate the following text from {target_lang_name} to {source_lang_name}. Output ONLY the translated text, nothing else. Do not add any explanations, notes, or commentary. The translation should be natural and fluent. CRITICAL: Output must be plain text only. Do NOT use any markdown formatting (no bold, italic, headers, lists, code blocks, etc.), no emojis, no special symbols. Output pure plain text only."
                 },
                 {"role": "user", "content": text}
             ]
@@ -76,6 +77,9 @@ async def _preprocess_and_run(file_id: str, text: str, source_lang: str, target_
             except Exception as e:
                 print(f"[WARN] Language detection failed: {e}")
                 source_lang = "en"
+            # 语言检测完成后同步更新 processing_status 中的 source_lang
+            if file_id in processing_status:
+                processing_status[file_id]["source_lang"] = source_lang
 
         # 3. 更新语言设置和历史记录
         storage.save_language_settings(file_id, source_lang, target_lang, original_text=text)
@@ -94,12 +98,14 @@ async def _preprocess_and_run(file_id: str, text: str, source_lang: str, target_
         if file_id in processing_status:
             processing_status[file_id]["title"] = title
 
-        # 5. 执行文本处理
-        await process_text_background(file_id, text, source_lang, target_lang)
-
-        # 6. 处理成功后才写入历史记录
+        # 5. 写入历史记录（提前到处理前，用户能立即看到新条目）
         text_preview = text.strip()[:100]
         storage.add_history_record(file_id, title, source_lang, target_lang, text_preview)
+        # 非 auto 模式下，endpoint 已先写入空标题记录，这里更新标题
+        storage.rename_history_record(file_id, title)
+
+        # 6. 执行文本处理
+        await process_text_background(file_id, text, source_lang, target_lang)
     except Exception as e:
         print(f"[ERROR] 预处理或处理出错: {str(e)}")
         import traceback
@@ -155,6 +161,12 @@ async def process_text(request: dict, background_tasks: BackgroundTasks):
             "total_sentences": 0,
             "preprocess": preprocess_label if preprocess_label else None
         }
+
+        # 非 auto 模式：在后台任务启动前立即保存语言设置和历史记录，用户能立即看到新条目
+        if source_lang != "auto":
+            storage.save_language_settings(file_id, source_lang, target_lang, original_text=text)
+            text_preview = text.strip()[:100]
+            storage.add_history_record(file_id, "", source_lang, target_lang, text_preview)
 
         # 所有耗时操作（翻译/生成/语言检测/标题生成/文本处理）全部在后台执行
         background_tasks.add_task(_preprocess_and_run, file_id, text, source_lang, target_lang, mode, text)

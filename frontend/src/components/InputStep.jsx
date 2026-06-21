@@ -493,8 +493,8 @@ function ModeSelector({ mode, setMode, t }) {
 function InputStep({ text, setText, sourceLang, setSourceLang, uiLang, loading, onProcess, t, inputMode, setInputMode, recentLanguages }) {
   // 记住直接输入模式的语言选择，默认 auto
   const directModeLangRef = useRef('auto')
-  // 记住非直接输入模式（翻译/生成）的语言选择，默认 en
-  const nonDirectModeLangRef = useRef('en')
+  // 记住非直接输入模式（翻译/生成）的语言选择，默认 null，等 recentLanguages 加载后再初始化
+  const nonDirectModeLangRef = useRef(null)
 
   const handleSourceLangChange = (lang) => {
     setSourceLang(lang)
@@ -511,16 +511,12 @@ function InputStep({ text, setText, sourceLang, setSourceLang, uiLang, loading, 
     if (newMode === 'direct') {
       // 切到直接输入模式：恢复该模式记住的语言（可能是 auto）
       setSourceLang(directModeLangRef.current)
-    } else if (prevMode === 'direct' && directModeLangRef.current === 'auto') {
-      // 从直接输入（auto）切到翻译/生成：恢复之前非直接模式选的语言，或用最近语言，默认 en
-      const lang = nonDirectModeLangRef.current || (recentLanguages || []).find(l => l !== 'auto') || 'en'
-      setSourceLang(lang)
-    } else if (prevMode === 'direct') {
-      // 从直接输入（非auto）切到翻译/生成：使用记住的非直接模式语言
+    } else if (prevMode === 'direct' && sourceLang === 'auto') {
+      // 从直接输入（auto）切到翻译/生成：auto 不可用，切换到非 auto 语言
       const lang = nonDirectModeLangRef.current || (recentLanguages || []).find(l => l !== 'auto') || 'en'
       setSourceLang(lang)
     }
-    // 翻译↔生成切换：语言不变
+    // 其他情况（包括从直接输入非 auto 切到翻译/生成，以及翻译↔生成）：保持当前选的语言
   }
   const getPlaceholder = () => {
     if (inputMode === 'translate') return t.modeTranslatePlaceholder

@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Settings, X, Key, Globe, Cpu, Check, Loader2, Gauge, Languages, ChevronLeft, ChevronRight, ChevronDown, Plus, Minus, BookOpen, RefreshCw, Download, ToggleLeft, ToggleRight, AlertCircle } from 'lucide-react'
+import { Settings, X, Key, Globe, Cpu, Check, Loader2, Gauge, Languages, ChevronLeft, ChevronRight, ChevronDown, Plus, Minus, BookOpen, RefreshCw, Download, ToggleLeft, ToggleRight, AlertCircle, Volume2 } from 'lucide-react'
 import { api } from '../utils/api'
 import { LangIcon, LANGUAGES } from './InputStep'
+import { setTtsEngine as setGlobalTtsEngine } from '../utils/speech'
 
 function NativeLangSelector({ value, onChange, recentLangs = [] }) {
   const [open, setOpen] = useState(false)
@@ -148,6 +149,13 @@ function SettingsModal({ isOpen, onClose, uiLang, onUiLangChange, pageSize, onPa
   const [versionInfo, setVersionInfo] = useState(null)
   const [autoUpdate, setAutoUpdate] = useState(false)
 
+  // TTS 引擎：'edge'（默认，效果好但慢）或 'webspeech'（实时，音质取决于设备和浏览器）
+  const [ttsEngine, setTtsEngine] = useState('edge')
+
+  // 自动更新进度
+  const [updateProgress, setUpdateProgress] = useState({ status: 'idle', progress: 0, message: '' })
+  const updatePollRef = useRef(null)
+
   useEffect(() => {
     if (isOpen) {
       setLoading(true)
@@ -174,6 +182,7 @@ function SettingsModal({ isOpen, onClose, uiLang, onUiLangChange, pageSize, onPa
         else if (prefs.target_lang) setLocalUiLang(prefs.target_lang)
         if (prefs.page_size) setLocalPageSize(prefs.page_size)
         if (prefs.auto_update !== undefined) setAutoUpdate(prefs.auto_update)
+        if (prefs.tts_engine) setTtsEngine(prefs.tts_engine)
         setLoading(false)
       }).catch(() => {
         setConfigs([{ api_key: '', base_url: '', model: '', has_key: false, masked_key: '' }])
@@ -245,6 +254,40 @@ function SettingsModal({ isOpen, onClose, uiLang, onUiLangChange, pageSize, onPa
     }
   }
 
+  const pollUpdateProgress = async () => {
+    if (updatePollRef.current) clearInterval(updatePollRef.current)
+    updatePollRef.current = setInterval(async () => {
+      try {
+        const p = await api.getUpdateProgress()
+        setUpdateProgress(p)
+        if (p.status === 'done' || p.status === 'error' || p.status === 'idle') {
+          clearInterval(updatePollRef.current)
+          updatePollRef.current = null
+        }
+      } catch (_) {
+        clearInterval(updatePollRef.current)
+        updatePollRef.current = null
+      }
+    }, 1000)
+  }
+
+  const handleAutoUpdate = async () => {
+    setUpdateProgress({ status: 'downloading', progress: 0, message: t.updatingStart || '正在准备更新...' })
+    try {
+      await api.triggerAutoUpdate()
+      pollUpdateProgress()
+    } catch (e) {
+      setUpdateProgress({ status: 'error', progress: 0, message: t.updateFailed || '更新失败' })
+    }
+  }
+
+  // 清理轮询
+  useEffect(() => {
+    return () => {
+      if (updatePollRef.current) clearInterval(updatePollRef.current)
+    }
+  }, [])
+
   const handleSave = async () => {
     setSaving(true)
     setSaved(false)
@@ -285,7 +328,11 @@ function SettingsModal({ isOpen, onClose, uiLang, onUiLangChange, pageSize, onPa
         page_size: localPageSize,
         recent_languages: updatedRecentLangs,
         auto_update: autoUpdate,
+        tts_engine: ttsEngine,
       })
+
+      // 立即应用到全局 speech 模块
+      setGlobalTtsEngine(ttsEngine)
 
       if (onRecentLangsChange) {
         onRecentLangsChange(updatedRecentLangs)
@@ -527,6 +574,42 @@ function SettingsModal({ isOpen, onClose, uiLang, onUiLangChange, pageSize, onPa
         </div>
       </div>
 
+      {/* TTS Engine */}
+      <div>
+        <label className="label-warm flex items-center gap-1.5 text-[10px] font-bold text-ink-400 uppercase tracking-widest mb-1.5">
+          <Volume2 className="w-3 h-3" />
+          {t.ttsEngine || '发音引擎'}
+        </label>
+        <div className="space-y-2">
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              onClick={() => setTtsEngine('edge')}
+              className={`px-3 py-2 text-xs rounded-sm border-2 transition-all text-left ${
+                ttsEngine === 'edge'
+                  ? 'border-amber-400 bg-amber-50 text-amber-700'
+                  : 'border-aged-200 bg-parchment-50 text-ink-600 hover:bg-parchment-100'
+              }`}
+            >
+              <div className="font-bold">Edge TTS</div>
+              <div className="text-[10px] opacity-70 mt-0.5">{t.ttsEdgeDesc || '效果好，但较慢'}</div>
+            </button>
+            <button
+              type="button"
+              onClick={() => setTtsEngine('webspeech')}
+              className={`px-3 py-2 text-xs rounded-sm border-2 transition-all text-left ${
+                ttsEngine === 'webspeech'
+                  ? 'border-amber-400 bg-amber-50 text-amber-700'
+                  : 'border-aged-200 bg-parchment-50 text-ink-600 hover:bg-parchment-100'
+              }`}
+            >
+              <div className="font-bold">Web Speech API</div>
+              <div className="text-[10px] opacity-70 mt-0.5">{t.ttsWebspeechDesc || '实时，音质取决于设备和浏览器'}</div>
+            </button>
+          </div>
+        </div>
+      </div>
+
       {/* Version Check */}
       <div className="pt-2 border-t border-aged-200/60">
         <label className="label-warm flex items-center gap-1.5 text-[10px] font-bold text-ink-400 uppercase tracking-widest mb-3">
@@ -575,22 +658,64 @@ function SettingsModal({ isOpen, onClose, uiLang, onUiLangChange, pageSize, onPa
                   {versionInfo.release_notes && (
                     <p className="text-[11px] opacity-80 line-clamp-3">{versionInfo.release_notes}</p>
                   )}
-                  {versionInfo.download_url && (
-                    <a
-                      href={versionInfo.download_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-600 hover:text-amber-700 underline"
-                    >
-                      <Download className="w-3 h-3" />
-                      {t.downloadUpdate || '下载更新'}
-                    </a>
+                  {versionInfo.platform && (
+                    <p className="text-[10px] opacity-60">{t.detectedPlatform || '检测到平台'}: {versionInfo.platform}</p>
                   )}
                 </div>
               ) : versionInfo.error ? (
                 <p>{t.updateCheckFailed || '检查更新失败'}</p>
               ) : (
                 <p>{t.noUpdateAvailable || '已是最新版本'}</p>
+              )}
+            </div>
+          )}
+
+          {/* Auto update progress & button */}
+          {versionInfo?.has_update && (
+            <div className="space-y-2">
+              {updateProgress.status === 'idle' && (
+                <button
+                  onClick={handleAutoUpdate}
+                  className="flex items-center gap-2 px-3 py-2 text-xs font-bold text-parchment-50 bg-amber-500 hover:bg-amber-600 border-2 border-amber-600 rounded-sm transition-colors"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  {t.autoUpdateNow || '自动更新'}
+                </button>
+              )}
+              {updateProgress.status !== 'idle' && (
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] text-ink-600">
+                      {updateProgress.status === 'downloading' && (updateProgress.message || 'Downloading...')}
+                      {updateProgress.status === 'downloaded' && (t.updateDownloaded || '下载完成，准备安装...')}
+                      {updateProgress.status === 'installing' && (t.updateInstalling || '正在安装更新...')}
+                      {updateProgress.status === 'done' && (t.updateDone || '更新完成，请重启应用')}
+                      {updateProgress.status === 'error' && (updateProgress.message || t.updateFailed || '更新失败')}
+                    </span>
+                    {updateProgress.status === 'downloading' && (
+                      <span className="text-[11px] font-bold text-amber-500">{updateProgress.progress}%</span>
+                    )}
+                  </div>
+                  {updateProgress.status === 'downloading' && (
+                    <div className="w-full h-1.5 bg-parchment-100 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-amber-400 transition-all duration-300"
+                        style={{ width: `${updateProgress.progress}%` }}
+                      />
+                    </div>
+                  )}
+                  {updateProgress.status === 'done' && (
+                    <p className="text-[10px] text-olive-600">{t.updateRestartHint || '请关闭并重新打开应用以完成更新'}</p>
+                  )}
+                  {updateProgress.status === 'error' && (
+                    <button
+                      onClick={handleAutoUpdate}
+                      className="text-[10px] font-bold text-amber-600 hover:text-amber-700 underline"
+                    >
+                      {t.retryUpdate || '重试'}
+                    </button>
+                  )}
+                </div>
               )}
             </div>
           )}

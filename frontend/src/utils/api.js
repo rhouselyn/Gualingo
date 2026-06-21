@@ -270,5 +270,10 @@ export const api = {
   triggerAutoUpdate: async () => {
     const response = await axios.post(`${baseUrl}/api/auto-update`);
     return response.data;
+  },
+
+  getUpdateProgress: async () => {
+    const response = await axios.get(`${baseUrl}/api/auto-update/progress`);
+    return response.data;
   }
 };

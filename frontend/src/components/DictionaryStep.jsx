@@ -9,7 +9,7 @@ import { speakText } from '../utils/speech'
 import { LangIcon, LANGUAGES } from './InputStep'
 import { api } from '../utils/api'
 
-function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingInfo, sentenceTranslations, selectedSentence, selectedWord, onSentenceClick, onCloseSentenceDetail, onWordClick, onStartLearning, loading, t, currentFileId, sourceLang, preprocessStatus, onBack, fileTitle, onTitleChange, pageSize = 50, dictStateRef, originalText = '' }) {
+function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingInfo, sentenceTranslations, selectedSentence, selectedWord, onSentenceClick, onCloseSentenceDetail, onWordClick, onStartLearning, loading, t, currentFileId, sourceLang, detectedLang, preprocessStatus, onBack, fileTitle, onTitleChange, pageSize = 50, dictStateRef, originalText = '' }) {
   const saved = dictStateRef?.current || {}
   const [expandedWord, setExpandedWord] = useState(null)
   const [wordDetailCache, setWordDetailCache] = useState({})
@@ -116,30 +116,37 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
       } else if (dictStateRef) {
         dictStateRef.current._lastFileId = currentFileId
       }
-      fetch(`/api/file/${currentFileId}/info`)
-        .then(r => r.json())
-        .then(data => {
-          const lang = data.source_lang
-          if (lang && lang !== 'auto') {
-            setActualSourceLang(lang)
-          }
-        })
-        .catch(() => {
-          fetch(`/api/status/${currentFileId}`)
-            .then(r => r.json())
-            .then(data => {
-              const lang = data.source_lang || sourceLang
-              if (lang && lang !== 'auto') {
-                setActualSourceLang(lang)
-              }
-            })
-            .catch(() => {})
-        })
+      // auto 模式下通过轮询结果（detectedLang）更新语言，而非从 API 获取，避免显示默认值 'en'
+      if (sourceLang === 'auto') {
+        if (detectedLang) {
+          setActualSourceLang(detectedLang)
+        }
+      } else {
+        fetch(`/api/file/${currentFileId}/info`)
+          .then(r => r.json())
+          .then(data => {
+            const lang = data.source_lang
+            if (lang && lang !== 'auto') {
+              setActualSourceLang(lang)
+            }
+          })
+          .catch(() => {
+            fetch(`/api/status/${currentFileId}`)
+              .then(r => r.json())
+              .then(data => {
+                const lang = data.source_lang || sourceLang
+                if (lang && lang !== 'auto') {
+                  setActualSourceLang(lang)
+                }
+              })
+              .catch(() => {})
+          })
+      }
     }
     if (sourceLang && sourceLang !== 'auto') {
       setActualSourceLang(sourceLang)
     }
-  }, [currentFileId, sourceLang])
+  }, [currentFileId, sourceLang, detectedLang])
 
   useEffect(() => {
     if (!showGlobalVocab) return
@@ -842,12 +849,14 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
           <ArrowLeft className="w-5 h-5" />
         </button>
 
-        <div className="flex items-center gap-2">
-          <LangIcon langCode={actualSourceLang} size="md" />
-          <span className="text-sm font-bold text-ink-700">
-            {LANGUAGES.find(l => l.value === actualSourceLang)?.en || actualSourceLang?.toUpperCase()}
-          </span>
-        </div>
+        {actualSourceLang && actualSourceLang !== 'auto' && (
+          <div className="flex items-center gap-2">
+            <LangIcon langCode={actualSourceLang} size="md" />
+            <span className="text-sm font-bold text-ink-700">
+              {LANGUAGES.find(l => l.value === actualSourceLang)?.en || actualSourceLang?.toUpperCase()}
+            </span>
+          </div>
+        )}
 
         {fileTitle && !editingTitle && (
           <button
