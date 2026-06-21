@@ -252,12 +252,12 @@ async def _do_translate_ui(lang_code: str):
 @router.get("/version-check")
 async def version_check():
     # Read current version from desktop/package.json
-    current_version = "1.4.0"
+    current_version = "1.6.0"
     package_json_path = os.path.join(os.path.dirname(__file__), "..", "desktop", "package.json")
     try:
         with open(package_json_path, "r", encoding="utf-8") as f:
             pkg = json.load(f)
-            current_version = pkg.get("version", "1.4.0")
+            current_version = pkg.get("version", "1.6.0")
     except Exception:
         pass
 

@@ -14,7 +14,7 @@ from config import UI_TRANSLATIONS_DIR, FRONTEND_DIR, HOST, PORT
 from utils.state import _ui_translation_cache, storage
 
 # ── 创建应用 ──────────────────────────────────────────────
-app = FastAPI(title="少邻国 - Gualingo", version="1.0.0")
+app = FastAPI(title="少邻国 - Gualingo", version="1.6.0")
 
 # ── CORS 中间件 ───────────────────────────────────────────
 app.add_middleware(
