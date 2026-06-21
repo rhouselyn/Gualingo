@@ -3,6 +3,11 @@
 import json
 import asyncio
 import os
+import sys
+import platform
+import tempfile
+import subprocess
+import shutil
 
 import requests
 from fastapi import APIRouter, HTTPException
@@ -269,18 +274,23 @@ async def version_check():
         resp.raise_for_status()
         data = resp.json()
         latest_version = data.get("tag_name", "").lstrip("v")
-        download_url = ""
-        assets = data.get("assets", [])
-        if assets:
-            download_url = assets[0].get("browser_download_url", "")
         release_notes = data.get("body", "")
         has_update = latest_version != current_version and latest_version != ""
+
+        # 根据当前系统匹配对应的安装包
+        assets = data.get("assets", [])
+        download_url = ""
+        matched_asset = _match_asset(assets)
+        if matched_asset:
+            download_url = matched_asset.get("browser_download_url", "")
+
         return {
             "current_version": current_version,
             "latest_version": latest_version,
             "has_update": has_update,
             "download_url": download_url,
             "release_notes": release_notes,
+            "platform": _get_platform_key(),
         }
     except Exception:
         return {
@@ -291,9 +301,167 @@ async def version_check():
         }
 
 
+def _get_platform_key():
+    """返回当前平台的标识: win-x64, mac-x64, mac-arm64, linux-x64"""
+    system = platform.system().lower()
+    machine = platform.machine().lower()
+    if system == "windows":
+        return "win-x64"
+    elif system == "darwin":
+        if machine in ("arm64", "aarch64"):
+            return "mac-arm64"
+        return "mac-x64"
+    elif system == "linux":
+        return "linux-x64"
+    return f"{system}-{machine}"
+
+
+def _match_asset(assets):
+    """根据当前系统从 assets 列表中匹配最合适的安装包"""
+    platform_key = _get_platform_key()
+    system = platform.system().lower()
+
+    # 优先级匹配规则
+    if system == "windows":
+        # Windows: 匹配 .exe (NSIS 安装包)
+        for a in assets:
+            name = a.get("name", "").lower()
+            if name.endswith(".exe") and "x64" in name:
+                return a
+        for a in assets:
+            name = a.get("name", "").lower()
+            if name.endswith(".exe"):
+                return a
+    elif system == "darwin":
+        # macOS: 匹配 .dmg，区分 arm64 和 x64
+        is_arm = platform_key == "mac-arm64"
+        for a in assets:
+            name = a.get("name", "").lower()
+            if name.endswith(".dmg"):
+                if is_arm and ("arm64" in name or "apple" in name or "silicon" in name):
+                    return a
+                if not is_arm and ("x64" in name or "intel" in name or "arm64" not in name):
+                    return a
+        # 没有精确匹配，取第一个 dmg
+        for a in assets:
+            if a.get("name", "").lower().endswith(".dmg"):
+                return a
+    elif system == "linux":
+        # Linux: 匹配 .AppImage
+        for a in assets:
+            name = a.get("name", "").lower()
+            if name.endswith(".appimage") and "x64" in name:
+                return a
+        for a in assets:
+            name = a.get("name", "").lower()
+            if name.endswith(".appimage"):
+                return a
+
+    # 兜底：返回第一个 asset
+    if assets:
+        return assets[0]
+    return None
+
+
+# 自动更新下载进度跟踪
+_update_progress = {
+    "status": "idle",  # idle / downloading / downloaded / installing / done / error
+    "progress": 0,     # 0-100
+    "message": "",
+    "download_path": "",
+}
+
+
+@router.get("/auto-update/progress")
+async def get_update_progress():
+    """获取自动更新进度"""
+    return _update_progress
+
+
 @router.post("/auto-update")
 async def auto_update():
-    return {
-        "status": "not_available",
-        "message": "Auto-update is only available in the desktop application",
-    }
+    """自动下载并安装更新"""
+    global _update_progress
+
+    if _update_progress["status"] in ("downloading", "installing"):
+        return {"status": _update_progress["status"], "message": "Update already in progress"}
+
+    # 1. 获取最新版本信息
+    try:
+        resp = requests.get(
+            "https://api.github.com/repos/rhouselyn/Gualingo/releases/latest",
+            timeout=5,
+        )
+        resp.raise_for_status()
+        data = resp.json()
+        assets = data.get("assets", [])
+        matched = _match_asset(assets)
+        if not matched:
+            _update_progress = {"status": "error", "progress": 0, "message": "No matching installer found for your platform", "download_path": ""}
+            return _update_progress
+        download_url = matched["browser_download_url"]
+        asset_name = matched.get("name", "update")
+    except Exception as e:
+        _update_progress = {"status": "error", "progress": 0, "message": f"Failed to fetch release info: {e}", "download_path": ""}
+        return _update_progress
+
+    # 2. 下载安装包到临时目录
+    _update_progress = {"status": "downloading", "progress": 0, "message": "Downloading...", "download_path": ""}
+
+    try:
+        tmp_dir = tempfile.mkdtemp(prefix="gualingo_update_")
+        file_path = os.path.join(tmp_dir, asset_name)
+
+        # 流式下载，跟踪进度
+        dl_resp = requests.get(download_url, stream=True, timeout=30)
+        dl_resp.raise_for_status()
+        total_size = int(dl_resp.headers.get("content-length", 0))
+        downloaded = 0
+
+        with open(file_path, "wb") as f:
+            for chunk in dl_resp.iter_content(chunk_size=8192):
+                if chunk:
+                    f.write(chunk)
+                    downloaded += len(chunk)
+                    if total_size > 0:
+                        pct = int(downloaded / total_size * 100)
+                        _update_progress["progress"] = pct
+                        _update_progress["message"] = f"Downloading... {pct}%"
+
+        # Linux AppImage 需要添加执行权限
+        if file_path.lower().endswith(".appimage"):
+            os.chmod(file_path, 0o755)
+
+        _update_progress["status"] = "downloaded"
+        _update_progress["progress"] = 100
+        _update_progress["message"] = "Download complete, preparing to install..."
+        _update_progress["download_path"] = file_path
+    except Exception as e:
+        _update_progress = {"status": "error", "progress": 0, "message": f"Download failed: {e}", "download_path": ""}
+        return _update_progress
+
+    # 3. 执行安装
+    _update_progress["status"] = "installing"
+    _update_progress["message"] = "Installing update..."
+
+    try:
+        system = platform.system().lower()
+        if system == "windows":
+            # Windows: 运行 NSIS 安装包，/S 静默安装
+            subprocess.Popen([file_path, "/S"], close_fds=True)
+        elif system == "darwin":
+            # macOS: 打开 dmg，用户拖拽安装
+            subprocess.Popen(["open", file_path], close_fds=True)
+        elif system == "linux":
+            # Linux: 直接运行 AppImage
+            subprocess.Popen([file_path], close_fds=True)
+        else:
+            _update_progress = {"status": "error", "progress": 0, "message": f"Unsupported platform: {system}", "download_path": ""}
+            return _update_progress
+
+        _update_progress["status"] = "done"
+        _update_progress["message"] = "Update installed. Please restart the application."
+    except Exception as e:
+        _update_progress = {"status": "error", "progress": 0, "message": f"Installation failed: {e}", "download_path": ""}
+
+    return _update_progress
