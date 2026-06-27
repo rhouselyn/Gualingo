@@ -27,7 +27,7 @@
 
 ## 详细介绍
 
-👉 [查看完整介绍页面](https://rhouselyn.github.io/Guapage)
+👉 [查看完整介绍页面](https://gualingo.dpdns.org/)
 
 ---
 
