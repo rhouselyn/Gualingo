@@ -2,7 +2,7 @@
 
 <div align="center">
 
-# 🐸 呱邻国
+# 🐸 呱邻国 Gualingo
 
 **完全由 AI 驱动。输入 API，实现语言自由。**
 
