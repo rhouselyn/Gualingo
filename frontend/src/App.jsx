@@ -1,28 +1,31 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback, lazy, Suspense } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { BookOpen, ArrowLeft, Settings, Loader2 } from 'lucide-react'
+import { Settings, Loader2 } from 'lucide-react'
 import { api } from './utils/api'
 import { translations } from './utils/translations'
 import { warmupSpeech, setTtsEngine } from './utils/speech'
 import ConfirmDialog from './components/ConfirmDialog'
 import AlertDialog from './components/AlertDialog'
 
+// 首屏（input 步骤）立即需要的组件保持同步加载
 import InputStep from './components/InputStep'
-import DictionaryStep from './components/DictionaryStep'
-import LearningStep from './components/LearningStep'
-import ProgressStep from './components/ProgressStep'
-import SentenceQuizStep from './components/SentenceQuizStep'
-import ListeningQuizStep from './components/ListeningQuizStep'
-import PhaseSelectorStep from './components/PhaseSelectorStep'
-import PhaseProgressStep from './components/PhaseProgressStep'
-import MaskedSentenceExerciseStep from './components/MaskedSentenceExerciseStep'
-import TranslationReconstructionStep from './components/TranslationReconstructionStep'
-import AllUnitsStep from './components/AllUnitsStep'
-import UnitCompleteStep from './components/UnitCompleteStep'
-import VocabListStep from './components/VocabListStep'
 import HistorySidebar from './components/HistorySidebar'
-import WordListPanel from './components/WordListPanel'
-import SettingsModal from './components/SettingsModal'
+
+// 其它步骤组件懒加载，按需打包成独立 chunk，显著减少首屏 JS 体积
+const DictionaryStep = lazy(() => import('./components/DictionaryStep'))
+const LearningStep = lazy(() => import('./components/LearningStep'))
+const ProgressStep = lazy(() => import('./components/ProgressStep'))
+const SentenceQuizStep = lazy(() => import('./components/SentenceQuizStep'))
+const ListeningQuizStep = lazy(() => import('./components/ListeningQuizStep'))
+const PhaseSelectorStep = lazy(() => import('./components/PhaseSelectorStep'))
+const PhaseProgressStep = lazy(() => import('./components/PhaseProgressStep'))
+const MaskedSentenceExerciseStep = lazy(() => import('./components/MaskedSentenceExerciseStep'))
+const TranslationReconstructionStep = lazy(() => import('./components/TranslationReconstructionStep'))
+const AllUnitsStep = lazy(() => import('./components/AllUnitsStep'))
+const UnitCompleteStep = lazy(() => import('./components/UnitCompleteStep'))
+const VocabListStep = lazy(() => import('./components/VocabListStep'))
+const WordListPanel = lazy(() => import('./components/WordListPanel'))
+const SettingsModal = lazy(() => import('./components/SettingsModal'))
 
 function FrogLogo({ size = 40 }) {
   return (
@@ -1274,6 +1277,7 @@ function App() {
 
   return (
     <div className="h-screen overflow-hidden bg-parchment-50 bg-paper-grain">
+      <Suspense fallback={null}>
       <main className="h-full">
         {step === 'input' ? (
           <div className="flex h-full">
@@ -1655,6 +1659,7 @@ function App() {
         onClose={() => setAlertDialog({ open: false, title: '', message: '' })}
         t={t}
       />
+      </Suspense>
     </div>
   )
 }

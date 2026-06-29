@@ -14,4 +14,18 @@ export default defineConfig({
       }
     }
   },
+  build: {
+    rollupOptions: {
+      output: {
+        // 将第三方依赖拆分为独立 chunk：文件名带 hash、内容稳定，
+        // 配合后端一年 immutable 缓存，可显著加快重访速度并减少主入口体积。
+        manualChunks: {
+          'react-vendor': ['react', 'react-dom', 'react-is', 'scheduler'],
+          'framer-motion': ['framer-motion'],
+          'lucide-react': ['lucide-react'],
+          'axios': ['axios'],
+        },
+      },
+    },
+  },
 })

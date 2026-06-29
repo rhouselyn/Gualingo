@@ -8,6 +8,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
+from starlette.types import Scope
 
 from llm_api import get_settings
 from config import UI_TRANSLATIONS_DIR, FRONTEND_DIR, HOST, PORT
@@ -24,6 +25,22 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+# ── 静态资源缓存 ──────────────────────────────────────────
+# Vite 构建产物文件名带 hash，内容变化时 hash 会变，因此可以永久缓存；
+# index.html 不缓存，确保用户始终拿到最新的入口 HTML。
+class CachedStaticFiles(StaticFiles):
+    """StaticFiles 子类：为 /assets 下带 hash 的文件设置一年 immutable 缓存。"""
+
+    async def get_response(self, path: str, scope: Scope):
+        response = await super().get_response(path, scope)
+        response.headers["Cache-Control"] = "public, max-age=31536000, immutable"
+        return response
+
+
+def _no_cache_headers():
+    return {"Cache-Control": "no-cache, no-store, must-revalidate"}
 
 # ── 注册路由 ──────────────────────────────────────────────
 from routers import text_processing, learning, phases, vocabulary, history, settings, tts, favorites
@@ -53,22 +70,22 @@ async def startup_event():
 
 # ── 前端静态文件服务 ────────────────────────────────────────
 
-# 挂载前端的 assets 目录
+# 挂载前端的 assets 目录（带 hash 的文件长期缓存）
 _assets_dir = FRONTEND_DIR / "assets"
 if _assets_dir.exists():
-    app.mount("/assets", StaticFiles(directory=str(_assets_dir)), name="assets")
+    app.mount("/assets", CachedStaticFiles(directory=str(_assets_dir)), name="assets")
 
 
-# 根路径：返回前端 index.html
+# 根路径：返回前端 index.html（不缓存，确保拿到最新入口）
 @app.get("/")
 async def serve_root():
-    return FileResponse(str(FRONTEND_DIR / "index.html"))
+    return FileResponse(str(FRONTEND_DIR / "index.html"), headers=_no_cache_headers())
 
 
-# SPA fallback：所有非 /api 路由返回 index.html
+# SPA fallback：所有非 /api 路由返回 index.html（不缓存）
 @app.get("/{full_path:path}")
 async def serve_frontend(full_path: str):
-    return FileResponse(str(FRONTEND_DIR / "index.html"))
+    return FileResponse(str(FRONTEND_DIR / "index.html"), headers=_no_cache_headers())
 
 
 # ── 直接运行 ──────────────────────────────────────────────
