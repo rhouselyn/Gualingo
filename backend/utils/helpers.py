@@ -30,8 +30,6 @@ class RateLimiter:
             self.last_call = time.time()
 
 
-ZH_FUNCTION_WORDS = {'的', '了', '地', '得', '着', '过', '吗', '呢', '吧', '啊', '呀', '哦', '嗯', '是', '在', '有', '和', '与', '或', '但', '而', '却', '又', '也', '都', '就', '才', '还', '已', '所', '该', '其', '这', '那', '个', '一', '种', '些', '等', '被', '把', '让', '给', '从', '向', '到', '对', '为', '以', '于', '及', '之', '将', '会', '能', '可', '要', '应', '需', '没', '不', '很', '最', '更', '太', '极', '比'}
-
 MAX_SENTENCE_WORDS_FOR_QUIZ = 8
 
 
@@ -106,15 +104,15 @@ def split_translation_to_phrases(translation, max_phrases=8):
 
 def select_key_tokens(seg_words, max_tokens=10):
     content_words = []
-    function_words = []
+    short_words = []
     for w in seg_words:
-        if len(w) <= 1 or w in ZH_FUNCTION_WORDS:
-            function_words.append(w)
+        if len(w) <= 1:
+            short_words.append(w)
         else:
             content_words.append(w)
 
     if len(content_words) <= max_tokens:
-        result = content_words + function_words[:max(0, max_tokens - len(content_words))]
+        result = content_words + short_words[:max(0, max_tokens - len(content_words))]
     else:
         step = len(content_words) / max_tokens
         result = [content_words[int(i * step)] for i in range(max_tokens)]

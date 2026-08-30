@@ -16,7 +16,7 @@ from utils.helpers import (
     get_listening_distractors_from_sentences, filter_eligible_sentences,
     find_item_in_plan, get_unit_flat_range, _is_word_item_learned,
     get_filtered_unit_total, get_filtered_step_in_unit, find_next_non_learned_position,
-    MAX_SENTENCE_WORDS_FOR_QUIZ, ZH_FUNCTION_WORDS,
+    MAX_SENTENCE_WORDS_FOR_QUIZ,
 )
 
 
